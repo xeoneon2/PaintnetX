@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Мобильный Paint v1.0</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="toolbar">
+    <div>
+      <button id="brushBtn" data-tool="brush">🖌️</button>
+      <div class="tool-label">Кисть</div>
+    </div>
+    <div>
+      <button id="eraserBtn" data-tool="eraser">🧽</button>
+      <div class="tool-label">Ластик</div>
+    </div>
+    <div>
+      <button id="fillBtn" data-tool="fill">💧</button> <!-- Иконка изменена -->
+      <div class="tool-label">Заливка</div>
+    </div>
+    <div>
+      <button id="pickerBtn" data-tool="picker">🔍</button>
+      <div class="tool-label">Пипетка</div>
+    </div>
+    <div>
+      <button id="shapeBtn" data-tool="shape">🔷</button>
+      <div class="tool-label">Фигура</div>
+    </div>
+    <div>
+      <button id="colorPickerBtn">
+        <div class="color-circle" id="currentColorCircle" style="background-color: #000000;"></div>
+      </button>
+      <div class="tool-label">Цвет</div>
+    </div>
+    <div>
+      <button id="fillColorPickerBtn">
+        <div class="color-circle" id="currentFillColorCircle" style="background-color: #ffffff;"></div>
+      </button>
+      <div class="tool-label">Цвет 2</div>
+    </div>
+    <div>
+      <button id="saveBtn">💾</button>
+      <div class="tool-label">Сохранить</div>
+    </div>
+    <div>
+      <button id="loadBtn">📂</button>
+      <div class="tool-label">Загрузить</div>
+    </div>
+  </div>
+  <canvas id="canvas"></canvas>
+  <!-- Three-circle picker cursor in cursor form -->
+  <div id="pickerCursor">
+    <div class="picker-large"></div>
+    <div class="picker-line-large-medium"></div>
+    <div class="picker-medium"></div>
+    <div class="picker-line-medium-small"></div>
+    <div class="picker-small"></div>
+  </div>
+  <!-- Selection overlay -->
+  <div id="selectionOverlay"></div>
+  <!-- Moving selection preview -->
+  <div id="movingPreview"></div>
+  <!-- Shape preview canvas -->
+  <canvas id="shapePreviewCanvas"></canvas>
+  <!-- Move handle for selected area -->
+  <div id="moveHandle">✋</div>
+  <!-- Resize handles -->
+  <div class="resize-handle resize-handle-nw" id="resizeHandleNW"></div>
+  <div class="resize-handle resize-handle-ne" id="resizeHandleNE"></div>
+  <div class="resize-handle resize-handle-sw" id="resizeHandleSW"></div>
+  <div class="resize-handle resize-handle-se" id="resizeHandleSE"></div>
+  <div class="resize-handle resize-handle-n" id="resizeHandleN"></div>
+  <div class="resize-handle resize-handle-s" id="resizeHandleS"></div>
+  <div class="resize-handle resize-handle-e" id="resizeHandleE"></div>
+  <div class="resize-handle resize-handle-w" id="resizeHandleW"></div>
+  <!-- Confirm paste button -->
+  <button id="confirmPasteBtn">✓</button>
+  <!-- Brush Settings Panel -->
+  <div id="brushPanel">
+    <div class="panel-header">
+      <div class="panel-title">Настройки кисти</div>
+      <button class="panel-close" id="closeBrushPanel">×</button>
+    </div>
+    <div class="panel-setting">
+      <label class="panel-label">Размер:</label>
+      <div style="display: flex; align-items: center;">
+        <input type="range" id="brushSize" min="1" max="50" value="10" class="panel-input">
+        <span class="brush-size-display" id="brushSizeDisplay">10</span>
+      </div>
+    </div>
+    <div class="panel-setting">
+      <label class="panel-label">Тип кисти:</label>
+      <select id="brushType" class="panel-input">
+        <option value="solid">Сплошная</option>
+        <option value="dotted">Точками</option>
+        <option value="spray">Спрей</option>
+        <option value="pencil">Карандаш</option>
+        <option value="star">Звезда</option>
+        <option value="fountainPen">Перьевая ручка</option>
+      </select>
+    </div>
+    <div class="panel-setting" id="dotIntervalSetting">
+      <label class="panel-label">Интервал точек (px):</label>
+      <div style="display: flex; align-items: center;">
+        <input type="range" id="dotInterval" min="1" max="50" value="10" class="panel-input">
+        <span class="distance-interval-display" id="dotIntervalDisplay">10</span>
+      </div>
+    </div>
+	<div class="panel-setting">
+    <label class="panel-label">Прозрачность:</label>
+    <div style="display: flex; align-items: center;">
+        <input type="range" id="brushOpacity" min="0" max="100" value="100" class="panel-input">
+        <span id="opacityDisplay">100%</span>
+    </div>
+</div>
+<div class="panel-setting">
+    <label class="panel-label">Мягкость (размытие):</label>
+    <div style="display: flex; align-items: center;">
+        <input type="range" id="brushBlur" min="0" max="20" value="0" class="panel-input">
+        <span id="blurDisplay">0px</span>
+    </div>
+</div>
+  </div>
+<!-- Eraser Settings Panel -->
+  <div id="eraserPanel">
+    <div class="panel-header">
+      <div class="panel-title">Настройки ластика</div>
+      <button class="panel-close" id="closeEraserPanel">×</button>
+    </div>
+    <div class="panel-setting">
+      <label class="panel-label">Размер:</label>
+      <div style="display: flex; align-items: center;">
+        <input type="range" id="eraserSize" min="1" max="50" value="10" class="panel-input">
+        <span class="eraser-size-display" id="eraserSizeDisplay">10</span>
+      </div>
+    </div>
+  </div>
+  <!-- Fill Settings Panel -->
+  <div id="fillPanel">
+    <div class="panel-header">
+      <div class="panel-title">Настройки заливки</div>
+      <button class="panel-close" id="closeFillPanel">×</button>
+    </div>
+    <div class="panel-setting">
+      <label class="panel-label">Глубина заливки:</label>
+      <div style="display: flex; align-items: center;">
+        <input type="range" id="fillTolerance" min="0" max="100" value="1" class="panel-input">
+        <span class="tolerance-display" id="toleranceDisplay">1</span>
+      </div>
+    </div>
+    <div class="panel-setting">
+      <label class="panel-checkbox-label">
+        <input type="checkbox" id="contiguousFill" class="panel-checkbox" checked>
+        Смежные области
+      </label>
+    </div>
+  </div>
+  <!-- Shape Settings Panel -->
+  <div id="shapePanel">
+    <div class="panel-header">
+      <div class="panel-title">Настройки фигуры</div>
+      <button class="panel-close" id="closeShapePanel">×</button>
+    </div>
+    <div class="panel-setting">
+      <label class="panel-label">Тип фигуры:</label>
+      <select id="shapeType" class="panel-input">
+        <option value="rectangle">Прямоугольник</option>
+        <option value="square">Квадрат</option>
+        <option value="oval">Овал</option>
+        <option value="circle">Круг</option>
+        <option value="line">Линия</option> <!-- Добавлен тип фигуры "Линия" -->
+      </select>
+    </div>
+    <div class="panel-setting">
+      <label class="panel-label">Стиль контура:</label>
+      <select id="shapeBorderStyle" class="panel-input">
+        <option value="solid">Сплошная</option>
+        <option value="dashed">Пунктирная</option>
+      </select>
+    </div>
+    <div class="panel-setting">
+      <label class="panel-label">Толщина контура:</label>
+      <div style="display: flex; align-items: center;">
+        <input type="range" id="shapeBorderWidth" min="1" max="20" value="2" class="panel-input">
+        <span class="border-width-display" id="shapeBorderWidthDisplay">2</span>
+      </div>
+    </div>
+    <div class="panel-setting">
+      <label class="panel-checkbox-label">
+        <input type="checkbox" id="shapeFill" class="panel-checkbox" checked>
+        Заливка
+      </label>
+    </div>
+  </div>
+  <!-- Color Palette Modal -->
+  <div id="colorPaletteModal">
+    <div class="palette-content">
+      <h2 class="palette-title" id="paletteTitle">Выберите цвет</h2>
+      <div class="color-grid" id="colorGrid">
+        <!-- 16 standard colors -->
+      </div>
+      <button class="palette-close" id="paletteClose">Закрыть</button>
+    </div>
+  </div>
+  <!-- Extended Color Picker -->
+  <div id="extendedColorPicker">
+    <div class="extended-palette-content">
+      <h2 class="palette-title">Расширенная палитра</h2>
+      <canvas id="colorWheel" width="250" height="250"></canvas>
+      <div class="selected-color-display" id="selectedColorDisplay" style="width: 60px; height: 60px; border-radius: 50%; margin: 10px auto; border: 3px solid #333; background-color: #000000;"></div>
+      <div class="color-controls">
+        <div class="color-control-group">
+          <label class="color-control-label" for="saturationSlider">Насыщенность:</label>
+          <input type="range" id="saturationSlider" min="0" max="100" value="100">
+        </div>
+        <div class="color-control-group">
+          <label class="color-control-label" for="brightnessSlider">Яркость:</label>
+          <input type="range" id="brightnessSlider" min="0" max="100" value="50">
+        </div>
+      </div>
+      <div class="palette-controls">
+        <button class="palette-btn palette-select-btn" id="selectExtendedColor">✓ Выбрать</button>
+        <button class="palette-btn palette-close-btn" id="closeExtendedPicker">Закрыть</button>
+      </div>
+    </div>
+  </div>
+  <input type="file" id="fileInput" accept="image/*" style="display: none;">
+    	<script src="main.js"></script>
+		<script src="brushEffects.js"></script>
+</body>
+</html>
